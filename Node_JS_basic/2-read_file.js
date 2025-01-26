@@ -1,36 +1,48 @@
-// 2-read_file.js
 const fs = require('fs');
 
 function countStudents(path) {
-  let data;
   try {
-    data = fs.readFileSync(path, 'utf8');
-  } catch (error) {
-    throw new Error('Cannot load the database');
-  }
+    // Read file synchronously
+    const data = fs.readFileSync(path, 'utf8');
 
-  const fields = {};
-  const students = data.split('\n').filter((student) => student !== '');
-  if (students.length === 0) {
-    throw new Error('Cannot load the database');
-  }
+    // Split data into lines and filter out empty ones
+    const lines = data.split('\n').filter((line) => line.trim() !== '');
 
-  students.shift();
-
-  const count = students.length;
-  console.log(`Number of students: ${count}`);
-
-  for (const student of students) {
-    const cols = student.split(',');
-    const field = cols[3];
-    if (!fields[field]) {
-      fields[field] = [];
+    if (lines.length <= 1) {
+      // If there's only a header or no students, exit early
+      console.log('Number of students: 0');
+      return;
     }
-    fields[field].push(cols[0]);
-  }
 
-  for (const i of Object.keys(fields)) {
-    console.log(`Number of students in ${i}: ${fields[i].length}. List: ${fields[i].join(', ')}`);
+    // Remove the first line (header)
+    const students = lines.slice(1);
+
+    // Prepare field map
+    const fields = {};
+
+    students.forEach((student) => {
+      const values = student.split(',').map((value) => value.trim());
+
+      if (values.length >= 4) {
+        const [firstname, , , field] = values;
+
+        if (!fields[field]) {
+          fields[field] = [];
+        }
+        fields[field].push(firstname);
+      }
+    });
+
+    // Total number of students
+    console.log(`Number of students: ${students.length}`);
+
+    // Log each field and its students
+    for (const [field, names] of Object.entries(fields)) {
+      console.log(`Number of students in ${field}: ${names.length}. List: ${names.join(', ')}`);
+    }
+  } catch (error) {
+    // Throw a clear error message if the file can't be loaded
+    throw new Error('Cannot load the database');
   }
 }
 
